@@ -9,6 +9,26 @@ mlflow.set_tracking_uri("http://localhost:5001")
 print(f"Connected to MLflow at: {mlflow.get_tracking_uri()}")
 
 
+import yaml
+
+def get_dvc_metadata(dvc_file_path):
+    with open(dvc_file_path, 'r') as f:
+        dvc_data = yaml.safe_load(f)
+    
+    metadata = {
+        'md5': dvc_data['outs'][0]['md5'],
+        'size': dvc_data['outs'][0]['size'],
+        'path': dvc_data['outs'][0]['path']
+    }
+    return metadata
+
+dvc_metadata = get_dvc_metadata('data/ames_data_2006_2008.parquet.dvc')
+print("DVC Metadata:")
+print(f"MD5 hash: {dvc_metadata['md5']}")
+print(f"File size: {dvc_metadata['size']} bytes")
+print(f"Data path: {dvc_metadata['path']}")
+
+
 import numpy as np
 import pandas as pd
 
@@ -78,15 +98,17 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import Ridge
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.kernel_ridge import KernelRidge
 
 
-models = [
+models = [("Kernel Ridge", KernelRidge(alpha=10))]
+"""[
     ("Ridge Regression", Ridge()),
     ("Decision Tree", DecisionTreeRegressor(max_depth=10, random_state=42)),
     ("K-Nearest Neighbors", KNeighborsRegressor(n_neighbors=10)),
     ("Random Forest", RandomForestRegressor(n_estimators=100, random_state=42)),
     ("Gradient Boosting", GradientBoostingRegressor(n_estimators=100, random_state=42)),
-]
+]"""
 
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error, r2_score
 
@@ -113,6 +135,8 @@ def fit_sklearn_models_with_cv(models, X_train, X_test, y_train, y_test):
             # log additional custom metrics, in addition to autologging
             mlflow.log_metric("cv_r2_mean", cv_mean)
             mlflow.log_metric("cv_r2_std", cv_std)
+            mlflow.log_param("alpha", "10") # e.g md5
+            #mlflow.log_param("max_leaf_nodes", "20")
 
             results[model_name] = {
                 "rmse": rmse,
