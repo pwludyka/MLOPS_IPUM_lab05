@@ -16,7 +16,7 @@ dependencies = [
     "pandas",
     "pyarrow",
     "ruff",
-    "scikit-learn",
+    "scikit-learn==1.6.1",
     "torch",
 ]
 
